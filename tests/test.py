@@ -1170,6 +1170,10 @@ def suite():
     # Test defaultdict clone, tests borrowed from Python 2.7 upstream
     from tests.test_defaultdict import TestDefaultDict
     suite.addTest(unittest.makeSuite(TestDefaultDict))
+    
+    # Tests for multilayer functions
+    from tests.parsertest import testModelMultilayer
+    suite.addTest(unittest.makeSuite(testModelMultilayer))
 
     return suite
 
