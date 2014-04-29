@@ -1,5 +1,11 @@
-import unittest2 as unittest
+import os
 import sys
+
+# Make sure we import from working tree
+pynagbase = os.path.dirname(os.path.realpath(__file__ + "/.."))
+sys.path.insert(0, pynagbase)
+
+import unittest2 as unittest
 import time
 
 import pynag.Utils
@@ -12,7 +18,8 @@ from cStringIO import StringIO
 original_stdout = sys.stdout
 original_stderr = sys.stderr
 
-class testPluginParams(unittest.TestCase):
+
+class PluginParams(unittest.TestCase):
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
@@ -20,7 +27,7 @@ class testPluginParams(unittest.TestCase):
         sys.stdout = StringIO()
 
     def tearDown(self):
-        sys.argv = self.argv_store
+        sys.argv = [sys.argv[0]]
         sys.stdout = original_stdout
 
     def create_params(self, *args):
@@ -57,7 +64,7 @@ class testPluginParams(unittest.TestCase):
         self.assertEquals(np.data['shortname'], 'testcase')
 
 
-class testPluginNoThreshold(unittest.TestCase):
+class PluginNoThreshold(unittest.TestCase):
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
@@ -105,7 +112,7 @@ class testPluginNoThreshold(unittest.TestCase):
         self.run_expect(case, 0, 15)
 
 
-class testPluginHelper(unittest.TestCase):
+class PluginHelper(unittest.TestCase):
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import PluginHelper
@@ -328,7 +335,7 @@ class testPluginHelper(unittest.TestCase):
 
 
 
-class testPlugin(unittest.TestCase):
+class Plugin(unittest.TestCase):
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
@@ -547,3 +554,67 @@ class testPlugin(unittest.TestCase):
     def test_number_32(self):
         case = '-c @10:20'
         self.run_expect(case, 0, 23)
+
+
+class NewPluginThresholdSyntax(unittest.TestCase):
+    """ Unit tests for pynag.Plugins.new_threshold_syntax """
+    def test_check_threshold(self):
+        """ Test check_threshold() with different parameters
+
+        Returns (in order of appearance):
+        0 - Unknown on invalid input
+        1 - If no levels are specified, return OK
+        2 - If an ok level is specified and value is within range, return OK
+        3 - If a critical level is specified and value is within range, return CRITICAL
+        4 - If a warning level is specified and value is within range, return WARNING
+        5 - If an ok level is specified, return CRITICAL
+        6 - Otherwise return OK
+        """
+        from pynag.Plugins.new_threshold_syntax import check_threshold
+        from pynag.Plugins import ok, warning, critical, unknown
+
+        # 0 - return unknown on invalid input
+        self.assertEqual(unknown, check_threshold(1, warning='invalid input'))
+
+        # 1 - If no levels are specified, return OK
+        self.assertEqual(ok, check_threshold(1))
+
+        # 2 - If an ok level is specified and value is within range, return OK
+        self.assertEqual(ok, check_threshold(1, ok="0..10"))
+        self.assertEqual(ok, check_threshold(1, ok="0..10", warning="0..10"))
+        self.assertEqual(ok, check_threshold(1, ok="0..10", critical="0..10"))
+
+        # 3 - If a critical level is specified and value is within range, return CRITICAL
+        self.assertEqual(critical, check_threshold(1, critical="0..10"))
+
+        # 4 - If a warning level is specified and value is within range, return WARNING
+        self.assertEqual(warning, check_threshold(1, warning="0..10"))
+
+        # 5 - If an ok level is specified, return CRITICAL
+        self.assertEqual(critical, check_threshold(1, ok="10..20"))
+
+        # 6 - Otherwise return OK
+        # ... we pass only warning, then only critical, then both, but value is always outside ranges
+        self.assertEqual(ok, check_threshold(1, warning="10..20"))
+        self.assertEqual(ok, check_threshold(1, critical="10..20"))
+        self.assertEqual(ok, check_threshold(1, warning="10..20", critical="20..30"))
+
+    def test_invalid_range(self):
+        from pynag.Plugins.new_threshold_syntax import check_range
+        from pynag.Utils import PynagError
+
+        self.assertRaises(PynagError, check_range, 1, '')
+        self.assertRaises(PynagError, check_range, 1, None)
+
+    def test_invalid_threshold(self):
+        from pynag.Plugins.new_threshold_syntax import parse_threshold
+        from pynag.Utils import PynagError
+
+        self.assertRaises(PynagError, parse_threshold, '')
+        self.assertRaises(AttributeError, parse_threshold, None)
+        self.assertRaises(PynagError, parse_threshold, 'string')
+
+if __name__ == "__main__":
+    unittest.main()
+
+# vim: sts=4 expandtab autoindent
