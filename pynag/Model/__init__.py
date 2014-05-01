@@ -51,6 +51,7 @@ import pynag.Utils
 from macros import _standard_macros
 
 from string_to_class import StringToClass
+from all_attributes import AllAttributes
 from nagios_objects import *
 
 # Path To Nagios configuration file
@@ -188,7 +189,6 @@ def _remove_from_contactgroup(my_object, contactgroup):
 
 
 string_to_class = StringToClass('shinken')
-string_to_class = StringToClass('nagios')
 
 # Attributelist is put here for backwards compatibility
 AttributeList = pynag.Utils.AttributeList
@@ -218,6 +218,7 @@ _add_property(ObjectDefinition, 'name')
 _add_property(ObjectDefinition, 'use')
 
 # For others, create attributes dynamically based on all_attributes.keys()
+all_attributes = AllAttributes('shinken')
 for object_type, attributes in all_attributes.object_definitions.items():
     # Lets find common attributes that every object definition should have:
     if object_type == 'any':
@@ -228,6 +229,7 @@ for object_type, attributes in all_attributes.object_definitions.items():
 
     for attribute in attributes:
         _add_property(Object, attribute)
+        print Object, attribute
 
 if __name__ == '__main__':
     pass
