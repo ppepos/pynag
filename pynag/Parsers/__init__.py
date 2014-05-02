@@ -200,6 +200,7 @@ class Config(object):
         """
 
         self.cfg_files = []  # List of other configuration files
+        self.pack_files = []  # List of other configuration files
         self.data = {}  # dict of every known object definition
         self.errors = []  # List of ParserErrors
         self.item_list = None
@@ -448,6 +449,7 @@ class Config(object):
 
             filename: the file to be parsed. This is supposed to a nagios object definition file
         """
+	#TODO Treat .pack files
         for i in self.parse_file(filename):
             self.pre_object_list.append(i)
 
@@ -1781,6 +1783,7 @@ class Config(object):
         self.parse_maincfg()
 
         self.cfg_files = self.get_cfg_files()
+	self.pack_files = self.get_pack_files()
 
         # When parsing config, we will softly fail if permission denied
         # comes on resource files. If later someone tries to get them via
@@ -2032,6 +2035,7 @@ class Config(object):
 
         """
         cfg_files = []
+	
         for config_object, config_value in self.maincfg_values:
 
             ## Add cfg_file objects to cfg file list
@@ -2066,8 +2070,68 @@ class Config(object):
                         if self.exists(raw_file) and not self.isdir(raw_file):
                             # Nagios doesnt care if cfg_file exists or not, so we will not throws errors
                             cfg_files.append(raw_file)
+                    elif raw_file.endswith('.pack'):
+                        if self.exists(raw_file) and not self.isdir(raw_file):
+                            # Nagios doesnt care if cfg_file exists or not, so we will not throws errors
+                            pack_files.append(raw_file)
 
         return cfg_files
+
+    def get_pack_files(self):
+        """ Return a list of all cfg files used in this configuration
+
+        Filenames are normalised so that if nagios.cfg specifies relative 
+        filenames we will convert it to fully qualified filename before returning.
+
+        Returns:
+
+            List of all configurations files used in the configuration.
+
+        Example:
+
+            print(get_cfg_files())
+            ['/etc/nagios/hosts/host1.cfg','/etc/nagios/hosts/host2.cfg',...]
+
+        """
+        pack_files = []
+	
+        for config_object, config_value in self.maincfg_values:
+
+            ## Add cfg_file objects to cfg file list
+            if config_object == "cfg_file":
+		if config_value.endswith(".pack"):
+                    config_value = self.abspath(config_value)
+                    if self.isfile(config_value):
+                        pack_files.append(config_value)
+
+            ## Parse all files in a cfg directory
+            if config_object == "cfg_dir":
+                config_value = self.abspath(config_value)
+                directories = []
+                raw_file_list = []
+                directories.append(config_value)
+                # Walk through every subdirectory and add to our list
+                while directories:
+                    current_directory = directories.pop(0)
+                    # Nagios doesnt care if cfg_dir exists or not, so why should we ?
+                    if not self.isdir(current_directory):
+                        continue
+                    for item in os.listdir(current_directory):
+                        # Append full path to file
+                        item = "%s" % (os.path.join(current_directory, item.strip()))
+                        if self.islink(item):
+                            item = os.readlink(item)
+                        if self.isdir(item):
+                            directories.append(item)
+                        if raw_file_list.count(item) < 1:
+                            raw_file_list.append(item)
+                for raw_file in raw_file_list:
+                    if raw_file.endswith('.pack'):
+                        if self.exists(raw_file) and not self.isdir(raw_file):
+                            # Nagios doesnt care if cfg_file exists or not, so we will not throws errors
+                            pack_files.append(raw_file)
+
+        return pack_files
 
     def abspath(self, path):
         """ Return the absolute path of a given relative path.
