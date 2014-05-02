@@ -64,6 +64,7 @@ pynag_directory = None
 # will be recreated whenever a parse is called.
 config = Parsers.config(cfg_file=cfg_file)
 
+backend = 'shinken'
 
 #: eventhandlers -- A list of Model.EventHandlers object.
 # Event handler is responsible for passing notification whenever something
@@ -188,7 +189,7 @@ def _remove_from_contactgroup(my_object, contactgroup):
         return False
 
 
-string_to_class = StringToClass('shinken')
+string_to_class = StringToClass(backend)
 
 # Attributelist is put here for backwards compatibility
 AttributeList = pynag.Utils.AttributeList
@@ -218,7 +219,7 @@ _add_property(ObjectDefinition, 'name')
 _add_property(ObjectDefinition, 'use')
 
 # For others, create attributes dynamically based on all_attributes.keys()
-all_attributes = AllAttributes('shinken')
+all_attributes = AllAttributes(backend)
 for object_type, attributes in all_attributes.object_definitions.items():
     # Lets find common attributes that every object definition should have:
     if object_type == 'any':
