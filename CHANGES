@@ -1,3 +1,81 @@
+Changes in 0.9.1 (August 5 2014)
+Bug Fixes:
+    - Fixes file_time bug in Utils.CheckResult
+
+Changes in 0.9.0 (July 23 2014)
+New Features:
+    - new method: Model.*.rename()
+    - new class: Utils.CheckResult, add checkresults
+      http://docs.pynag.org/en/latest/pynag.Utils.html#pynag.Utils.CheckResult
+    - new importer module, currently supports csv files
+      http://docs.pynag.org/en/latest/pynag.Utils.html#module-pynag.Utils.importer
+    - better docstrings, reflected on http://docs.pynag.org
+
+Bug Fixes:
+    - Bug fixes in Model.*.get_current_status()
+    - Fix Parsers.Livestatus.test() traceback
+    - Fix Parsers line continuation
+    - Fix contactgroup/service and contactgroup/host relationships
+
+Changes in 0.8.9 (Apr 15 2014)
+Bug Fixes:
+    - Deploy gzipped version of manpage with setup.py
+
+Changes in 0.8.8 (Apr 15 2014)
+Bug Fixes:
+    - MANIFEST fixes in the build process
+New Features:
+    - Utils.misc.FakeNagiosEnvironment()
+    - Parsers.MultiSite now has backend aware get_host, get_contact, etc
+    - Incremental updates to unit tests
+
+Changes in 0.8.7 (Apr 14 2014)
+Bug Fixes:
+    - Ship a gzipped version of manpage with release
+
+Changes in 0.8.6 (Apr 14 2014)
+Bug Fixes:
+    - manpage is now delivered with the tarball (not generated on build itme)
+    - Docstring updates
+New Features:
+    - Support for systemd init scripts
+    - New Module Parsers.MultiSite
+    - All classes in Parsers are now new-style
+
+Changes in 0.8.5 (Apr 8 2014)
+Bug Fixes:
+    - Fix broken build due to manpage requirements
+
+Changes in 0.8.4 (Apr 8 2014)
+New Features:
+    - get_effective_* is now faster
+    - New decorator Utils.cache_only()
+    - New method Service.merge_with_host()
+
+Bug Fixes:
+    - Fix hostgroup/service relationships
+
+Changes in 0.8.3 (Mar 24 2014)
+New Features:
+    - Utils.runCommand() supports new env parameter
+Bug Fixes:
+    - Parsers.LogFiles() now orders archivelogs by last modified time
+
+Changes in 0.8.2 (Mar 21 2014)
+New Features:
+    - Utils.AttributeList() - now aware of "null" values
+    - Notable performance tweaks in parsing
+    - Experimental Config Parser over ssh
+    - New EventHandler: NagiosReloadHandler
+    - Better shinken compatiblity
+    - New method: guess_nagios_binary()
+    - Major improvements in grep_to_livestatus
+Bug Fixes:
+    - Code is more python3 compatible
+    - Performance tweaks in external commands
+    - Fixed Macro resolving for hosts
+    - Bugfixes in "Pynag livestatus" subcommand
+
 Changes in 0.8.1 (Feb 19 2014)
 New Features:
     - Support setting of custom host variables

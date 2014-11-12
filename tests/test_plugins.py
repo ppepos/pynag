@@ -1,10 +1,22 @@
-import unittest2 as unittest
+
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
+import os
 import sys
+
+
+# Make sure we import from working tree
+pynagbase = os.path.dirname(os.path.realpath(__file__ + "/.."))
+sys.path.insert(0, pynagbase)
+
+import unittest2 as unittest
 import time
 
 import pynag.Utils
 import pynag.Plugins
-
+import signal
 # Some of the methods here print directly to stdout but we
 # dont want to spam the output of the unittests. Lets do a temp
 # blocking of stdout and stderr
@@ -12,7 +24,9 @@ from cStringIO import StringIO
 original_stdout = sys.stdout
 original_stderr = sys.stderr
 
-class testPluginParams(unittest.TestCase):
+
+class PluginParams(unittest.TestCase):
+
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
@@ -20,7 +34,7 @@ class testPluginParams(unittest.TestCase):
         sys.stdout = StringIO()
 
     def tearDown(self):
-        sys.argv = self.argv_store
+        sys.argv = [sys.argv[0]]
         sys.stdout = original_stdout
 
     def create_params(self, *args):
@@ -57,7 +71,8 @@ class testPluginParams(unittest.TestCase):
         self.assertEquals(np.data['shortname'], 'testcase')
 
 
-class testPluginNoThreshold(unittest.TestCase):
+class PluginNoThreshold(unittest.TestCase):
+
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
@@ -81,9 +96,7 @@ class testPluginNoThreshold(unittest.TestCase):
         else:
             self.fail('SystemExit exception expected')
 
-    """
-    All tests return OK since thresholds are not required
-    """
+    # All tests return OK since thresholds are not required
     def test_number_1(self):
         case = ''
         self.run_expect(case, 0, -23)
@@ -105,7 +118,8 @@ class testPluginNoThreshold(unittest.TestCase):
         self.run_expect(case, 0, 15)
 
 
-class testPluginHelper(unittest.TestCase):
+class PluginHelper(unittest.TestCase):
+
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import PluginHelper
@@ -114,6 +128,7 @@ class testPluginHelper(unittest.TestCase):
                                          dest='fakedata',
                                          help='fake data to test thresholds')
         sys.stdout = StringIO()
+
     def tearDown(self):
         sys.argv = self.argv_store
         sys.stdout = original_stdout
@@ -134,11 +149,11 @@ class testPluginHelper(unittest.TestCase):
             self.fail('unexpected exception: %s' % e)
         else:
             self.fail('SystemExit exception expected')
+        finally:
+            signal.alarm(0)
 
-    """
-    Critical if "stuff" is over 20, else warn if over 10
-    (will be critical if "stuff" is less than 0)
-    """
+    # Critical if "stuff" is over 20, else warn if over 10
+    # (will be critical if "stuff" is less than 0)
     def test_number_1(self):
         case = '--th=metric=fakedata,ok=0..10,warn=10..20'
         self.run_expect(case, -23, 2)
@@ -155,9 +170,7 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,ok=0..10,warn=10..20'
         self.run_expect(case, 23, 2)
 
-    """
-    Same as above. Negative "stuff" is OK
-    """
+    # Same as above. Negative "stuff" is OK
     def test_number_5(self):
         case = '--th=metric=fakedata,ok=inf..10,warn=10..20'
         self.run_expect(case, '-23', 0)
@@ -174,10 +187,8 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,ok=inf..10,warn=10..20'
         self.run_expect(case, '23', 2)
 
-    """
-    Critical if "stuff" is over 20, else warn if "stuff" is below 10
-    (will be critical if "stuff" is less than 0)
-    """
+    # Critical if "stuff" is over 20, else warn if "stuff" is below 10
+    # (will be critical if "stuff" is less than 0)
     def test_number_9(self):
         case = '--th=metric=fakedata,warn=0..10,crit=20..inf'
         self.run_expect(case, '-23', 0)
@@ -194,9 +205,7 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,warn=0..10,crit=20..inf'
         self.run_expect(case, '23', 2)
 
-    """
-    Critical if "stuff" is less than 1
-    """
+    # Critical if "stuff" is less than 1
     def test_number_13(self):
         case = '--th=metric=fakedata,ok=1..inf'
         self.run_expect(case, '-23', 2)
@@ -213,9 +222,7 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,ok=1..inf'
         self.run_expect(case, '23', 0)
 
-    """
-    1-9 is warning, negative or above 10 is critical
-    """
+    # 1-9 is warning, negative or above 10 is critical
     def test_number_17(self):
         case = '--th=metric=fakedata,warn=1..9,crit=^0..10'
         self.run_expect(case, '-23', 2)
@@ -232,9 +239,7 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,warn=1..9,crit=^0..10'
         self.run_expect(case, '23', 2)
 
-    """
-    The only noncritical range is 5:6
-    """
+    # The only noncritical range is 5:6
     def test_number_21(self):
         case = '--th=metric=fakedata,ok=5..6'
         self.run_expect(case, '-23', 2)
@@ -259,9 +264,7 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,ok=5..6'
         self.run_expect(case, '7', 2)
 
-    """
-    Critical if "stuff" is 10 to 20
-    """
+    # Critical if "stuff" is 10 to 20
     def test_number_27(self):
         case = '--th=metric=fakedata,ok=^10..20'
         self.run_expect(case, '-23', 0)
@@ -290,10 +293,8 @@ class testPluginHelper(unittest.TestCase):
         case = '--th=metric=fakedata,ok=^10..20'
         self.run_expect(case, '23', 0)
 
-    """
-    Cmdline thresholds pass but we insert a "hardcoded" metric with thresholds
-    which will also be evaluated
-    """
+    # Cmdline thresholds pass but we insert a "hardcoded" metric with thresholds
+    # which will also be evaluated
     def test_number_34(self):
         # Extra case with hardcoded thresholds
         self.my_plugin.add_metric('fakedata2', value='15',
@@ -326,15 +327,15 @@ class testPluginHelper(unittest.TestCase):
         self.assertTrue(True, "Timeout occured in plugin, just like expected.")
 
 
+class Plugin(unittest.TestCase):
 
-
-class testPlugin(unittest.TestCase):
     def setUp(self):
         self.argv_store = sys.argv
         from pynag.Plugins import simple as Plugin
         self.np = Plugin()
         sys.stdout = StringIO()
         sys.stderr = StringIO()
+
     def tearDown(self):
         sys.argv = self.argv_store
         sys.stdout = original_stdout
@@ -347,7 +348,7 @@ class testPlugin(unittest.TestCase):
             self.np.add_perfdata('fake', value, uom='fakes',
                                  warn=10, crit=20, minimum=-100, maximum=100)
             perfdata_string = self.np.perfdata_string()
-            print perfdata_string
+            print(perfdata_string)
             self.assertEquals(perfdata_string, "| '%s'=%s%s;%s;%s;%s;%s" % (
                               'fake', value, 'fakes', 10, 20, -100, 100))
             self.np.add_message('OK', 'Some message')
@@ -358,15 +359,12 @@ class testPlugin(unittest.TestCase):
             self.assertEquals(e.code, expected_exit)
         except Exception, e:
             import traceback
-            print traceback.format_exc()
+            print(traceback.format_exc())
             self.fail('unexpected exception: %s' % e)
         else:
             self.fail('SystemExit exception expected')
 
-
-    """
-    Throws SystemExit, required parameter not set when activating
-    """
+    # Throws SystemExit, required parameter not set when activating
     def test_add_arg_req_missing(self):
         self.np.add_arg('F', 'fakedata',
                         'fake data to test thresholds', required=True)
@@ -397,10 +395,8 @@ class testPlugin(unittest.TestCase):
         code = self.np.code_string2int('UNKNOWN')
         self.assertEquals(code, 3, "UNKNOWN did not map to 3")
 
-    """
-    Critical if "stuff" is over 20, else warn if over 10
-    (will be critical if "stuff" is less than 0)
-    """
+    # Critical if "stuff" is over 20, else warn if over 10
+    # (will be critical if "stuff" is less than 0)
     def test_number_1(self):
         case = '-w 10 -c 20'
         self.run_expect(case, 2, -23)
@@ -417,9 +413,7 @@ class testPlugin(unittest.TestCase):
         case = '-w 10 -c 20'
         self.run_expect(case, 2, 23)
 
-    """
-    Same as above. Negative "stuff" is OK
-    """
+    # Same as above. Negative "stuff" is OK
     def test_number_5(self):
         case = '-w ~:10 -c ~:20'
         self.run_expect(case, 0, -23)
@@ -436,10 +430,8 @@ class testPlugin(unittest.TestCase):
         case = '-w ~:10 -c ~:20'
         self.run_expect(case, 2, 23)
 
-    """
-    Critical if "stuff" is over 20, else warn if "stuff" is below 10
-    (will be critical if "stuff" is less than 0)
-    """
+    # Critical if "stuff" is over 20, else warn if "stuff" is below 10
+    # (will be critical if "stuff" is less than 0)
     def test_number_9(self):
         case = '-w 10: -c 20'
         self.run_expect(case, 2, -23)
@@ -456,9 +448,7 @@ class testPlugin(unittest.TestCase):
         case = '-w 10: -c 20'
         self.run_expect(case, 2, 23)
 
-    """
-    Critical if "stuff" is less than 1
-    """
+    # Critical if "stuff" is less than 1
     def test_number_13(self):
         case = '-c 1:'
         self.run_expect(case, 2, -23)
@@ -475,9 +465,7 @@ class testPlugin(unittest.TestCase):
         case = '-c 1:'
         self.run_expect(case, 0, 23)
 
-    """
-    1-9 is warning, negative or above 10 is critical
-    """
+    # 1-9 is warning, negative or above 10 is critical
     def test_number_17(self):
         case = '-w ~:0 -c 10'
         self.run_expect(case, 2, -23)
@@ -494,9 +482,7 @@ class testPlugin(unittest.TestCase):
         case = '-w ~:0 -c 10'
         self.run_expect(case, 2, 23)
 
-    """
-    The only noncritical range is 5:6
-    """
+    # The only noncritical range is 5:6
     def test_number_21(self):
         case = '-c 5:6'
         self.run_expect(case, 2, -23)
@@ -517,9 +503,7 @@ class testPlugin(unittest.TestCase):
         case = '-c 5:6'
         self.run_expect(case, 0, 6)
 
-    """
-    Critical if "stuff" is 10 to 20
-    """
+    # Critical if "stuff" is 10 to 20
     def test_number_26(self):
         case = '-c @10:20'
         self.run_expect(case, 0, -23)
@@ -547,3 +531,69 @@ class testPlugin(unittest.TestCase):
     def test_number_32(self):
         case = '-c @10:20'
         self.run_expect(case, 0, 23)
+
+
+class NewPluginThresholdSyntax(unittest.TestCase):
+
+    """ Unit tests for pynag.Plugins.new_threshold_syntax """
+
+    def test_check_threshold(self):
+        """ Test check_threshold() with different parameters
+
+        Returns (in order of appearance):
+        0 - Unknown on invalid input
+        1 - If no levels are specified, return OK
+        2 - If an ok level is specified and value is within range, return OK
+        3 - If a critical level is specified and value is within range, return CRITICAL
+        4 - If a warning level is specified and value is within range, return WARNING
+        5 - If an ok level is specified, return CRITICAL
+        6 - Otherwise return OK
+        """
+        from pynag.Plugins.new_threshold_syntax import check_threshold
+        from pynag.Plugins import ok, warning, critical, unknown
+
+        # 0 - return unknown on invalid input
+        self.assertEqual(unknown, check_threshold(1, warning='invalid input'))
+
+        # 1 - If no levels are specified, return OK
+        self.assertEqual(ok, check_threshold(1))
+
+        # 2 - If an ok level is specified and value is within range, return OK
+        self.assertEqual(ok, check_threshold(1, ok="0..10"))
+        self.assertEqual(ok, check_threshold(1, ok="0..10", warning="0..10"))
+        self.assertEqual(ok, check_threshold(1, ok="0..10", critical="0..10"))
+
+        # 3 - If a critical level is specified and value is within range, return CRITICAL
+        self.assertEqual(critical, check_threshold(1, critical="0..10"))
+
+        # 4 - If a warning level is specified and value is within range, return WARNING
+        self.assertEqual(warning, check_threshold(1, warning="0..10"))
+
+        # 5 - If an ok level is specified, return CRITICAL
+        self.assertEqual(critical, check_threshold(1, ok="10..20"))
+
+        # 6 - Otherwise return OK
+        # ... we pass only warning, then only critical, then both, but value is always outside ranges
+        self.assertEqual(ok, check_threshold(1, warning="10..20"))
+        self.assertEqual(ok, check_threshold(1, critical="10..20"))
+        self.assertEqual(ok, check_threshold(1, warning="10..20", critical="20..30"))
+
+    def test_invalid_range(self):
+        from pynag.Plugins.new_threshold_syntax import check_range
+        from pynag.Utils import PynagError
+
+        self.assertRaises(PynagError, check_range, 1, '')
+        self.assertRaises(PynagError, check_range, 1, None)
+
+    def test_invalid_threshold(self):
+        from pynag.Plugins.new_threshold_syntax import parse_threshold
+        from pynag.Utils import PynagError
+
+        self.assertRaises(PynagError, parse_threshold, '')
+        self.assertRaises(AttributeError, parse_threshold, None)
+        self.assertRaises(PynagError, parse_threshold, 'string')
+
+if __name__ == "__main__":
+    unittest.main()
+
+# vim: sts=4 expandtab autoindent

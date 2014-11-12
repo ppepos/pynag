@@ -319,6 +319,9 @@ def delete_object():
                       default=False,help="Recursively apply to related child objects")
     (opts,args) = parser.parse_args(sys.argv[2:])
     pynag.Model.cfg_file = opts.cfg_file
+    
+    if opts.examples == True:
+        return print_examples()
 
     attributes,where_statement=split_where_and_set(args)
     objects = search_objects(search_statements=where_statement)
@@ -509,7 +512,7 @@ def _get_all_downtimes():
         result += s.data.get('servicedowntime', [])
         result += s.data.get('hostdowntime', [])
         for i in result:
-            i['id'] = i.get('comment_id', None)
+            i['id'] = i.get('downtime_id', None)
         return result
 def copy_object():
     parser.usage = ''' %prog copy <SET attr1=value1 [attr2=val2]> <WHERE ...> [--filename /path/to/file] '''
@@ -581,7 +584,7 @@ def livestatus():
     # We will be working with args, here as the main source of queries.
     # Any options added should be appended to args
     if opts.get is not None:
-        args.append( "GET %s" % opts.get )
+        args.insert(0, "GET %s" % opts.get )
     if opts.limit is not None:
         args.append( 'Limit: %s' % opts.limit )
     for i in opts.filters:
