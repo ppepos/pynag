@@ -31,7 +31,7 @@ class StringToClass(object):
                                                 self.all_attributes)
 
     # for dictionary-like access ['host']
-    def __getitem__(self, item, default):
+    def __getitem__(self, item, default=None):
         if default != None:
             ret_value = self.string_to_class.get(item, default)
         else:

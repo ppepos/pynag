@@ -43,27 +43,7 @@ import pynag.errors
 import pynag.Utils
 
 from pynag import Parsers
-from string_to_class import StringToClass
-from object_factory import ObjectFactory
-
-# Path To Nagios configuration file
-cfg_file = None  # '/etc/nagios/nagios.cfg'
-
-# Were new objects are written by default
-pynag_directory = None
-
-# This is the config parser that we use internally, if cfg_file is changed, then config
-# will be recreated whenever a parse is called.
-config = Parsers.config(cfg_file=cfg_file)
-
-
-#: eventhandlers -- A list of Model.EventHandlers object.
-# Event handler is responsible for passing notification whenever something
-# important happens in the model.
-#
-# For example FileLogger class is an event handler responsible for logging to
-# file whenever something has been written.
-eventhandlers = []
+from nagios_objects import *
 
 # Default value returned when a macro cannot be found
 _UNRESOLVED_MACRO = ''
@@ -71,6 +51,11 @@ _UNRESOLVED_MACRO = ''
 # We know that a macro is a custom variable macro if the name
 # of the macro starts with this prefix:
 _CUSTOM_VARIABLE_PREFIX = '_'
+
+__all__ = [
+        'nagios_objects',
+        'attribute_list',
+        ]
 
 
 class ModelError(pynag.errors.PynagError):
@@ -80,27 +65,6 @@ class ModelError(pynag.errors.PynagError):
 class InvalidMacro(ModelError):
     """Raised when a method is inputted with an invalid macro."""
 
-
-# Multi-Backend Support
-backend = 'nagios'
-string_to_class = StringToClass(backend=backend)
-factory = ObjectFactory(backend=backend)
-factory.prepare_object_module(config, cfg_file, eventhandlers, pynag_directory)
-
-Contact = factory.Contact
-Service = factory.Service
-Host = factory.Host
-Hostgroup = factory.Hostgroup
-Contactgroup = factory.Contactgroup
-Servicegroup = factory.Servicegroup
-Timeperiod = factory.Timeperiod
-HostDependency = factory.HostDependency
-ServiceDependency = factory.ServiceDependency
-HostEscalation = factory.HostEscalation
-ServiceEscalation = factory.ServiceEscalation
-Command = factory.Command
-ObjectDefinition = factory.ObjectDefinition
-ObjectRelations = factory.ObjectRelations
 
 if __name__ == '__main__':
     pass

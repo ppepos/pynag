@@ -6,20 +6,40 @@ import subprocess
 import time
 import getpass
 
+import pynag.Control.Command
+
 from pynag import Parsers
-import pynag.Model
 from pynag.Model import macros
 from pynag.Model import all_attributes
 
-import pynag.Control.Command
-
-string_to_class = pynag.Model.string_to_class
-print string_to_class
+from string_to_class import StringToClass
+from object_factory import ObjectFactory
 
 try:
     from collections import defaultdict
 except ImportError:
     from pynag.Utils import defaultdict
+
+# Path To Nagios configuration file
+cfg_file = None  # '/etc/nagios/nagios.cfg'
+
+# Were new objects are written by default
+pynag_directory = None
+
+# This is the config parser that we use internally, if cfg_file is changed, then config
+# will be recreated whenever a parse is called.
+config = Parsers.config(cfg_file=cfg_file)
+
+
+#: eventhandlers -- A list of Model.EventHandlers object.
+# Event handler is responsible for passing notification whenever something
+# important happens in the model.
+#
+# For example FileLogger class is an event handler responsible for logging to
+# file whenever something has been written.
+eventhandlers = []
+
+AttributeList = pynag.Utils.AttributeList
 
 class ObjectRelations(object):
 
@@ -333,7 +353,6 @@ class ObjectFetcher(object):
         ObjectFetcher._cached_shortnames = defaultdict(dict)
         ObjectFetcher._cached_names = defaultdict(dict)
         ObjectFetcher._cached_object_type = defaultdict(list)
-        import pdb; pdb.set_trace()
         global config, string_to_class
         # If global variable cfg_file has been changed, lets create a new ConfigParser object
         if config is None or config.cfg_file != cfg_file:
@@ -2588,4 +2607,26 @@ def prepare_module_attributes(cfg, cfgf, evt_handlers, pynag_dir):
     cfg_file = cfgf
     eventhandlers = evt_handlers
     pynag_directory = pynag_dir
+
+
+# Multi-Backend Support
+backend = 'nagios'
+string_to_class = StringToClass(backend=backend)
+factory = ObjectFactory(backend=backend)
+factory.prepare_object_module(config, cfg_file, eventhandlers, pynag_directory)
+
+Contact = factory.Contact
+Service = factory.Service
+Host = factory.Host
+Hostgroup = factory.Hostgroup
+Contactgroup = factory.Contactgroup
+Servicegroup = factory.Servicegroup
+Timeperiod = factory.Timeperiod
+HostDependency = factory.HostDependency
+ServiceDependency = factory.ServiceDependency
+HostEscalation = factory.HostEscalation
+ServiceEscalation = factory.ServiceEscalation
+Command = factory.Command
+ObjectDefinition = factory.ObjectDefinition
+ObjectRelations = factory.ObjectRelations
 
